@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#05070a">
+<title>Chameleon Deal Analyzer</title>
+<style>
+:root{--bg:#05070a;--panel:#0c1118;--panel2:#111925;--line:#1c2733;--text:#e8eef3;--mute:#8a98a6;--ac:#19d3a2;--bad:#ff6b6b;--warn:#f5b84b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+header{padding:20px 0 8px}
+h1{margin:0;font-size:1.5rem;letter-spacing:-.01em}
+h1 span{color:var(--ac)}
+h3.t{margin:0 0 10px;font-size:1rem;color:var(--ac)}
+.sub{color:var(--mute);margin:4px 0 0;font-size:.9rem}
+nav{display:flex;gap:6px;margin:16px 0;border-bottom:1px solid var(--line);overflow-x:auto}
+nav button{background:none;border:0;border-bottom:2px solid transparent;color:var(--mute);padding:10px 14px;font:inherit;font-weight:600;cursor:pointer;white-space:nowrap}
+nav button[aria-selected=true]{color:var(--ac);border-bottom-color:var(--ac)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.grid{display:grid;gap:16px}
+.col{display:grid;gap:16px;align-content:start;min-width:0}
+@media(min-width:820px){.grid{grid-template-columns:1.15fr 1fr;align-items:start}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+form h3{grid-column:1/-1;margin:10px 0 0;font-size:1rem;color:var(--ac)}
+.full{grid-column:1/-1}
+.f label{display:block;font-size:.85rem;color:var(--mute);margin-bottom:4px}
+.in{display:flex;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:8px}
+.in span{color:var(--mute);font-size:.75rem;padding-right:10px;white-space:nowrap}
+input{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:10px;font:inherit;min-width:0}
+.in input{border:0;background:none}
+.row{display:flex;gap:8px}
+.row input{flex:1}
+.hero{padding:4px 0 14px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.hero small{color:var(--mute);display:block}
+.hero b{font-size:2.4rem;line-height:1.1;letter-spacing:-.02em}
+.m{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:.95rem}
+.m span{color:var(--mute)}
+.ok{color:var(--ac)}.no{color:var(--bad)}
+.sv-high{color:var(--bad)}.sv-medium{color:var(--warn)}.sv-low{color:var(--mute)}
+.legend{color:var(--mute);font-size:.75rem;margin:10px 0 0}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.btn{background:var(--ac);color:#05070a;border:0;border-radius:8px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer}
+.btn.alt{background:none;color:var(--text);border:1px solid var(--line);font-weight:600}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+details.card summary{cursor:pointer;font-weight:600;color:var(--ac)}
+.cc{margin-top:8px}
+.cc h3{margin:14px 0 4px;font-size:1rem;color:var(--ac)}
+.cc label{display:flex;gap:8px;align-items:center;padding:6px 0;font-size:.9rem}
+.cc label>span{margin-left:auto;color:var(--mute)}
+.cc input[type=checkbox]{width:18px;height:18px;accent-color:var(--ac);padding:0;flex:none}
+.gauge{height:10px;background:var(--bg);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.gauge i{display:block;height:100%}
+.deal{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.deal:last-child{border:0}
+.deal input[type=checkbox]{width:20px;height:20px;accent-color:var(--ac);flex:none;padding:0}
+.deal .t{flex:1;min-width:0}
+.deal .t b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.deal .t small{color:var(--mute)}
+.mini{background:none;border:1px solid var(--line);color:var(--text);border-radius:6px;padding:6px 10px;font:inherit;font-size:.8rem;cursor:pointer}
+.mini.del{color:var(--bad)}
+.empty{color:var(--mute);margin:0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:380px}
+th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);font-size:.9rem}
+th{color:var(--ac)}
+td:first-child{color:var(--mute)}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--ac);padding:10px 16px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;z-index:9}
+#toast.on{opacity:1}
+footer{color:var(--mute);font-size:.75rem;padding:24px 0}
+[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+#printReport{display:none}
+@media print{
+@page{margin:16mm}
+body{background:#fff!important;color:#111!important;font:12pt/1.45 Arial,sans-serif}
+body>*:not(#printReport){display:none!important}
+#printReport{display:block!important;padding:0}
+#printReport h1{font-size:20pt;color:#111}
+#printReport h2{font-size:14pt;margin:16pt 0 6pt}
+#printReport p{margin:3pt 0;overflow-wrap:anywhere}
+#printReport .print-muted{color:#555}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<h1>Chameleon <span>Deal Analyzer</span></h1>
+<p class="sub">Run the numbers on a rental, a flip or a BRRRR, save it, and compare up to three deals.</p>
+</header>
+<nav role="tablist" aria-label="Sections">
+<button role="tab" data-v="rental" aria-selected="true">Rental</button>
+<button role="tab" data-v="flip" aria-selected="false">Fix &amp; Flip</button>
+<button role="tab" data-v="brrrr" aria-selected="false">BRRRR</button>
+<button role="tab" data-v="deals" aria-selected="false">Saved deals <span id="cnt"></span></button>
+</nav>
+<main>
+<section id="v-rental" class="grid"></section>
+<section id="v-flip" class="grid" hidden></section>
+<section id="v-brrrr" class="grid" hidden></section>
+<section id="v-deals" hidden>
+<div class="card">
+<div class="btns" style="margin:0 0 8px">
+<button class="btn" id="cmpBtn" disabled>Compare selected</button>
+<span class="sub" style="align-self:center">Select 2 or 3 deals of the same type.</span>
+</div>
+<div id="list"></div>
+</div>
+<div class="card" id="cmpCard" style="margin-top:16px" hidden>
+<div class="scroll" id="cmp"></div>
+<div class="btns"><button class="btn" id="cmpPdf">Export comparison to PDF</button></div>
+</div>
+</section>
+</main>
+<footer>Estimates for planning only, not financial advice. Deals are stored in this browser only.</footer>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<section id="printReport" aria-label="Deal Analyzer report"></section>
+
+<script>
+window.addEventListener("error",function(e){
+  var el=document.getElementById("chameleon-error");
+  if(el){el.style.display="block";el.textContent+="ERROR: "+e.message+" at line "+e.lineno+"\n"}
+});
+window.addEventListener("DOMContentLoaded",function(){
+try{
+
+(function(){
+"use strict";
+var KEY="cda.deals.v1",TYPES=["rental","flip","brrrr"],TL={rental:"Rental",flip:"Fix & Flip",brrrr:"BRRRR"};
+var FIELDS={
+rental:["Purchase and loan",["price","Purchase price","$",250000],["down","Down payment","%",20],["rate","Interest rate","%",7],["term","Loan term","years",30],["closing","Closing costs","$",5000],["rehab","Initial repairs","$",0],
+"Income",["rent","Monthly rent","$/mo",2200],["other","Other income","$/mo",0],
+"Expenses",["tax","Property tax","$/yr",3000],["ins","Insurance","$/yr",1200],["hoa","HOA","$/mo",0],["vac","Vacancy","% rent",5],["mgmt","Management","% rent",8],["maint","Maintenance","% rent",5],["capex","CapEx reserve","% rent",5]],
+flip:["Deal",["arv","After-repair value (ARV)","$",300000],["price","Purchase price","$",180000],["rehab","Rehab budget","$",40000],
+"Costs",["buyClose","Buying closing costs","$",4000],["months","Project length","months",6],["hold","Holding costs","$/mo",1500],["fin","Financing costs","$",8000],["sell","Selling costs","% ARV",8]],
+brrrr:["Purchase and rehab",["price","Purchase price","$",150000],["closing","Closing costs","$",4000],["rehab","Rehab budget","$",40000],["arv","After-repair value (ARV)","$",250000],["months","Months to complete","months",6],["hold","Holding costs","$/mo",800],
+"Refinance",["ltv","Refinance LTV","%",75],["rrate","Refinance rate","%",7],["rterm","Refinance term","years",30],
+"Income and expenses",["rent","Monthly rent","$/mo",2100],["vac","Vacancy","% rent",5],["tax","Property tax","$/yr",2800],["ins","Insurance","$/yr",1200],["hoa","HOA","$/mo",0],["mgmt","Management","% rent",8],["maint","Maintenance","% rent",5],["capex","CapEx reserve","% rent",5]]
+};
+var S={},sel=[],revT=500,pdfLoading=null;
+
+function defaults(t){var o={name:"",cc:{x:{},credit:0}};FIELDS[t].forEach(function(f){if(typeof f!=="string")o[f[0]]=f[3]});return o}
+function $(s){return document.querySelector(s)}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function d(a,b){return b?a/b:0}
+function cl(x){return Math.max(0,Math.min(1,x))}
+function M(n){return n==null||isNaN(n)?"n/a":(n<0?"-$":"$")+Math.abs(n).toLocaleString("en-US",{maximumFractionDigits:0})}
+function P(n){return n==null||isNaN(n)?"n/a":n.toFixed(2)+"%"}
+function X(n){return n==null||isNaN(n)?"n/a":n.toFixed(2)+"x"}
+function PI(n){return n===Infinity?"Infinite":P(n)}
+function YN(v){return v?"Yes":"No"}
+function SC(n){return Math.round(n)+" / 100"}
+function dot(n){return n>=70?"\uD83D\uDFE2":n>=50?"\uD83D\uDFE1":"\uD83D\uDD34"}
+function toast(m){var t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(function(){t.classList.remove("on")},2600)}
+function getDeals(){try{return JSON.parse(localStorage.getItem(KEY))||[]}catch(e){return[]}}
+function putDeals(a){try{localStorage.setItem(KEY,JSON.stringify(a));return true}catch(e){toast("Could not save. Browser storage is unavailable.");return false}}
+function pm(loan,rate,yrs){var r=rate/1200,n=yrs*12;return n?(r?loan*r/(1-Math.pow(1+r,-n)):loan/n):0}
+function noiOf(i){var egi=(i.rent+(i.other||0))*12*(1-i.vac/100);return egi-(i.tax+i.ins+i.hoa*12+egi*(i.mgmt+i.maint+i.capex)/100)}
+function fin(m,noi,pr,sec,sc){m.push(["Deal score",sc,SC,sc>=70?true:sc<50?false:null]);m.noi=noi;m.pr=pr;m.sec=sec;m.score=sc;return m}
+
+/* each calc returns [label,value,formatter,good] rows plus .pr .sec .score .noi */
+var CALC={
+rental:function(i){
+var ds=pm(i.price*(1-i.down/100),i.rate,i.term)*12,noi=noiOf(i),cf=noi-ds,cash=i.price*i.down/100+i.closing+i.rehab;
+var cap=d(noi,i.price)*100,coc=d(cf,cash)*100,dscr=ds?noi/ds:null,one=d(i.rent,i.price+i.rehab)*100,fifty=i.rent*.5-ds/12;
+var sc=cl(cap/8)*25+cl(coc/12)*25+(dscr==null?25:cl((dscr-1)/.5)*25)+(cf>0?25:0);
+return fin([
+["Monthly cash flow",cf/12,M,cf>0],["Annual cash flow",cf,M,cf>0],["NOI (annual)",noi,M,null],["Cash invested",cash,M,null],
+["Cap rate",cap,P,cap>=6],["Cash-on-cash return",coc,P,coc>=8],["DSCR",dscr,X,dscr==null?null:dscr>=1.25],
+["1% rule (rent / price)",one,P,one>=1],["50% rule cash flow /mo",fifty,M,fifty>0]],noi,cf/12,cap,sc);
+},
+flip:function(i){
+var mao=i.arv*.7-i.rehab,hold=i.months*i.hold,sell=i.arv*i.sell/100;
+var invest=i.price+i.rehab+i.buyClose+hold+i.fin,total=invest+sell,profit=i.arv-total;
+var roi=d(profit,invest)*100,margin=d(profit,i.arv)*100;
+var sc=profit<=0?0:cl(roi/25)*40+cl(margin/15)*30+(i.price<=mao?30:0);
+return fin([
+["Net profit",profit,M,profit>0],["Max allowable offer (70% rule)",mao,M,i.price<=mao],["Total project cost",total,M,null],
+["ROI (on cost before sale)",roi,P,roi>=20],["Profit margin (of ARV)",margin,P,margin>=10]],null,profit,roi,sc);
+},
+brrrr:function(i){
+var cash=i.price+i.closing+i.rehab+i.months*i.hold,refi=i.arv*i.ltv/100,rec=refi-cash,left=Math.max(0,cash-refi);
+var ds=pm(refi,i.rrate,i.rterm)*12,noi=noiOf(i),cf=noi-ds,cap=d(noi,i.arv)*100;
+var coc=left>0?d(cf,left)*100:(cf>0?Infinity:0),inf=left<=0;
+var sc=(cf>0?25:0)+cl(cap/8)*20+cl(d(refi,cash))*35+(ds?cl((noi/ds-1)/.5)*20:20);
+return fin([
+["Post-refi cash flow /mo",cf/12,M,cf>0],["Total cash in",cash,M,null],["Refinance proceeds (ARV x LTV)",refi,M,null],
+["Capital recycled",rec,M,rec>=0],["Money left in deal",left,M,left<=0?true:null],
+["Post-refi cap rate",cap,P,cap>=6],["Post-refi cash-on-cash",coc,PI,coc>=8],
+["Infinite return (all cash recovered)",inf,YN,inf?true:null]],noi,cf/12,cap,sc);
+}
+};
+var LEGEND={
+rental:"Green means the number meets common benchmarks: positive cash flow, cap rate 6%+, cash-on-cash 8%+, DSCR 1.25+, rent at 1% of price or more. Deal score 70+ is green.",
+flip:"Green means the number meets common benchmarks: positive profit, purchase at or under MAO, ROI 20%+, margin 10%+. Deal score 70+ is green.",
+brrrr:"Green means positive cash flow, cap rate 6%+ on ARV, and cash recovered at refinance. Cap rate uses ARV as the value. Deal score 70+ is green."
+};
+
+/* sensitivity: [label,key,op,value] op: x multiply, + add, = set; key "cap" shifts exit cap on ARV */
+var SENS={
+rental:[["Rent -10%","rent","x",.9],["Rent +10%","rent","x",1.1],["Vacancy 3%","vac","=",3],["Vacancy 8%","vac","=",8],["Rate -1%","rate","+",-1],["Rate +1%","rate","+",1]],
+brrrr:[["Rent -10%","rent","x",.9],["Rent +10%","rent","x",1.1],["Vacancy 3%","vac","=",3],["Vacancy 8%","vac","=",8],["Rate -1%","rrate","+",-1],["Rate +1%","rrate","+",1],["Exit cap +0.5%","cap","+",.5],["Exit cap -0.5%","cap","+",-.5]],
+flip:[["ARV -5%","arv","x",.95],["ARV +5%","arv","x",1.05],["Rehab +10%","rehab","x",1.1],["Rehab +20%","rehab","x",1.2],["Timeline +3 months","months","+",3]]
+};
+function sens(t){
+var b=CALC[t](S[t]),rows=[["Base",b]];
+SENS[t].forEach(function(s){
+var i=Object.assign({},S[t]),v=i[s[1]];
+if(s[1]==="cap"){var c=d(b.noi,i.arv)+s[3]/100;if(b.noi>0&&c>0)i.arv=b.noi/c}
+else i[s[1]]=Math.max(0,s[2]==="x"?v*s[3]:s[2]==="+"?v+s[3]:s[3]);
+rows.push([s[0],CALC[t](i)]);
+});
+var h=t==="flip"?["Net profit","ROI"]:["Cash flow /mo","Cap rate"];
+$("#sens-"+t).innerHTML="<table><thead><tr><th>Scenario</th><th>"+h[0]+"</th><th>"+h[1]+"</th><th>Score</th></tr></thead><tbody>"+
+rows.map(function(r){var m=r[1];return"<tr><td>"+r[0]+"</td><td>"+M(m.pr)+"</td><td>"+P(m.sec)+"</td><td>"+dot(m.score)+" "+Math.round(m.score)+"</td></tr>"}).join("")+"</tbody></table>";
+}
+
+/* closing costs */
+function ccItems(t){
+var i=S[t],sp=t==="rental"?i.price:i.arv,tax=i.tax!=null?i.tax:i.price*.012,ins=i.ins!=null?i.ins:i.price*.005;
+var loan=t==="rental"?i.price*(1-i.down/100):t==="brrrr"?i.arv*i.ltv/100:i.price;
+return{bp:i.price,sp:sp,
+b:[["orig","Loan origination (1%)",loan*.01],["appr","Appraisal",600],["insp","Inspection",400],["title","Title search + insurance (1%)",i.price*.01],["esc","Escrow",500],["rec","Recording",150],["ptax","Prepaid taxes (6 months)",tax/2],["pins","Prepaid insurance (12 months)",ins]],
+s:[["agent","Agent commission (6%)",sp*.06],["stitle","Title insurance (0.5%)",sp*.005],["xfer","Transfer tax (1%)",sp*.01],["prorate","Prorated taxes (3 months)",tax/4],["credit","Repair credits",i.cc.credit]]};
+}
+function ccTot(t,k){var x=S[t].cc.x,s=0;ccItems(t)[k].forEach(function(r){if(!x[r[0]])s+=r[2]});return s}
+function ccRender(t){
+var c=ccItems(t),x=S[t].cc.x;
+function blk(a,ttl,base,lbl,ap){
+var tot=0,h="<h3>"+ttl+"</h3>";
+a.forEach(function(r){var on=!x[r[0]];if(on)tot+=r[2];
+h+='<label><input type="checkbox" data-cc="'+r[0]+'"'+(on?" checked":"")+">"+r[1]+"<span>"+(r[0]==="credit"?'<input type="number" data-cr min="0" step="any" value="'+S[t].cc.credit+'" style="width:90px;padding:4px 8px" aria-label="Repair credits amount">':M(r[2]))+"</span></label>"});
+return h+'<div class="m"><span>Total</span><b>'+M(tot)+'</b></div><div class="m"><span>% of '+lbl+"</span><b>"+P(d(tot,base)*100)+"</b></div>"+ap;
+}
+$("#cc-"+t).innerHTML=blk(c.b,"Buyer closing costs",c.bp,"purchase price",'<div class="btns"><button class="btn alt" data-a="applyb" data-t="'+t+'">Use as closing costs</button></div>')+
+blk(c.s,"Seller closing costs",c.sp,"sale price",t==="flip"?'<div class="btns"><button class="btn alt" data-a="applys" data-t="'+t+'">Use as selling costs</button></div>':"");
+}
+
+/* reverse calculator (rental) */
+function rev(){
+var i=S.rental,T=revT,k=(1-i.vac/100)*(1-(i.mgmt+i.maint+i.capex)/100),fx=(i.tax+i.ins)/12+i.hoa,pf=pm(1,i.rate,i.term);
+var noiM=(i.rent+i.other)*k-fx,pmt=pf*i.price*(1-i.down/100),kd=pf*(1-i.down/100),allow=noiM-T;
+function pos(v){return v>0?v:null}
+var maxP=kd>0?pos(allow/kd):null,minRent=k>0?pos((T+pmt+fx)/k-i.other):null;
+var down=pf>0&&allow>0?Math.max(0,100*(1-allow/pf/i.price)):null;
+var occ=(i.rent+i.other)*(1-(i.mgmt+i.maint+i.capex)/100)>0?(fx+pmt)/((i.rent+i.other)*(1-(i.mgmt+i.maint+i.capex)/100))*100:null;
+function row(l,v,f){return'<div class="m"><span>'+l+"</span><b>"+f(v)+"</b></div>"}
+$("#rev").innerHTML=row("Maximum purchase price",maxP,M)+row("Down payment needed at current price",down,P)+row("Minimum monthly rent required",minRent,M)+row("Break-even occupancy",occ,P)+'<p class="legend">Uses the rate, term, down payment, rent and expenses from the form. "n/a" means the target cannot be reached.</p>';
+}
+
+/* backend calls (stubbed when function is missing) */
+function api(p,b,m){
+function mk(){return{mock:1,data:m?m():null}}
+return fetch(p,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)}).then(function(r){
+if(r.status===404||r.status===405)return mk();
+if(!r.ok)throw 0;
+return r.json().then(function(j){return{data:j}});
+},function(){if(navigator.onLine)return mk();throw 0});
+}
+function mockAI(t,m){
+var f=[],sc=Math.round(m.score);
+m.forEach(function(r,n){if(r[3]===false&&r[0]!=="Deal score")f.push({severity:n===0?"High":"Medium",title:r[0],detail:"Is below the usual benchmark ("+r[2](r[1])+")."})});
+if(!f.length)f.push({severity:"Low",title:"No major flags",detail:"No major red flags against standard benchmarks."});
+return{score:sc,verdict:sc>=70?"strong":sc>=50?"moderate":"weak",flags:f,narrative:"Sample analysis only. This "+TL[t]+" deal scores "+sc+" out of 100 using the built-in benchmarks.\n\n"+(f[0].severity==="Low"?"The numbers hold up against the standard rules of thumb, but test your rent, expense and repair assumptions before you commit.":"The flagged items are where the deal falls short. Adjust price, terms or the scope of work and re-run the numbers."),recommendations:[]};
+}
+function aiShow(el,r){
+var j=r.data||{},sc=Math.max(0,Math.min(100,Math.round(+j.score||0)));
+var col=sc>=70?"var(--ac)":sc>=50?"var(--warn)":"var(--bad)";
+var verdict=j.verdict?String(j.verdict).toUpperCase():"";
+var flags=j.flags||[];
+el.innerHTML=(r.mock?'<p class="legend">Sample output: the AI backend is not connected yet.</p>':"")
++'<div class="hero"><small>AI deal score'+(verdict?" \u00B7 "+esc(verdict):"")+'</small><b style="color:'+col+'">'+sc+'</b> / 100<div class="gauge" style="margin-top:8px"><i style="width:'+sc+"%;background:"+col+'"></i></div></div>'
++'<h3 class="t">Red flags</h3>'
++(flags.length?flags.map(function(f){
+var v=String(f.severity||"low").toLowerCase();
+var cls=(v==="high"||v==="medium")?v:"low";
+return'<div class="m"><b class="sv-'+cls+'">'+esc(f.severity||"Low")+'</b><span>'+(f.title?'<b>'+esc(f.title)+'</b><br>':"")+esc(f.detail||f.text||"")+'</span></div>';
+}).join(""):'<p class="legend">No red flags returned.</p>')
++'<h3 class="t" style="margin-top:14px">Report</h3>'
++String(j.narrative||"").split(/\n\n/).map(function(p){return"<p>"+esc(p)+"</p>"}).join("")
++((j.recommendations&&j.recommendations.length)?'<h3 class="t" style="margin-top:14px">Recommendations</h3><ul style="padding-left:18px;margin:0">'+j.recommendations.map(function(rec){return"<li>"+esc(rec)+"</li>"}).join("")+'</ul>':"");
+}
+function ai(t){
+var el=$("#ai-"+t),c=current(t),m=CALC[t](c.inputs);
+var calculated={};m.forEach(function(r){calculated[r[0]]=r[1]});
+el.textContent="Analyzing...";
+api("https://chameleon-prompts.netlify.app/.netlify/functions/analyze-deal",{dealType:t,name:c.name,inputs:c.inputs,calculated:calculated},function(){return mockAI(t,m)}).then(function(r){aiShow(el,r)},function(){el.textContent="AI analysis unavailable. Try again later."});
+}
+function imp(t){
+var u=$("#u-"+t).value.trim(),o=$("#imp-"+t);
+if(!/^https?:\/\/([\w-]+\.)*(zillow|redfin)\.com\//i.test(u)){toast("Enter a Zillow or Redfin link.");return}
+o.textContent="Fetching...";
+api("/.netlify/functions/fetch-property",{url:u}).then(function(r){
+if(r.mock){o.textContent="Import isn't connected yet. Enter details manually.";return}
+var p=r.data||{};
+if(p.price>0){S[t].price=+p.price;$("#"+t+"-price").value=p.price;update(t)}
+o.textContent=[p.bedrooms&&p.bedrooms+" bd",p.bathrooms&&p.bathrooms+" ba",p.sqft&&Number(p.sqft).toLocaleString("en-US")+" sqft",p.yearBuilt&&"built "+p.yearBuilt].filter(Boolean).join(" \u00B7 ")||"Imported.";
+},function(){o.textContent="Could not fetch. Enter details manually."});
+}
+
+/* views */
+function buildView(t){
+var h='<div class="card full"><div class="f"><label for="u-'+t+'">Paste Zillow or Redfin URL</label><div class="row"><input id="u-'+t+'" type="url" placeholder="https://www.zillow.com/..."><button class="btn" data-a="imp" data-t="'+t+'">Import</button></div></div><p class="legend" id="imp-'+t+'"></p></div>';
+h+='<div class="col"><form class="card" id="f-'+t+'" autocomplete="off"><div class="f full"><label for="'+t+'-name">Deal name</label><input id="'+t+'-name" data-k="name" type="text" maxlength="60" placeholder="e.g. 14 Oak Street" value="'+esc(S[t].name)+'"></div>';
+FIELDS[t].forEach(function(f){
+if(typeof f==="string"){h+="<h3>"+f+"</h3>";return}
+h+='<div class="f"><label for="'+t+"-"+f[0]+'">'+f[1]+'</label><div class="in"><input id="'+t+"-"+f[0]+'" data-k="'+f[0]+'" type="number" inputmode="decimal" min="0" step="any" value="'+S[t][f[0]]+'"><span>'+f[2]+"</span></div></div>";
+});
+h+='</form><details class="card"><summary>Closing costs calculator</summary><div class="cc" id="cc-'+t+'"></div></details>';
+if(t==="rental")h+='<details class="card"><summary>Reverse calculator</summary><div class="f" style="margin-top:10px"><label for="revT">Target monthly cash flow</label><div class="in"><input id="revT" type="number" inputmode="decimal" step="any" value="'+revT+'"><span>$/mo</span></div></div><div id="rev" style="margin-top:8px"></div></details>';
+h+='</div><div class="col"><aside class="card"><div id="out-'+t+'"></div><div class="btns"><button class="btn" data-a="save" data-t="'+t+'">Save deal</button><button class="btn alt" data-a="pdf" data-t="'+t+'">Export PDF</button><button class="btn alt" data-a="reset" data-t="'+t+'">Reset</button></div></aside>';
+h+='<div class="card"><h3 class="t">Sensitivity analysis</h3><div class="scroll" id="sens-'+t+'"></div></div>';
+h+='<div class="card"><h3 class="t">AI analysis</h3><button class="btn" data-a="ai" data-t="'+t+'">Analyze this deal with AI</button><div id="ai-'+t+'" style="margin-top:12px"></div></div></div>';
+$("#v-"+t).innerHTML=h;
+$("#f-"+t).addEventListener("submit",function(e){e.preventDefault()});
+$("#f-"+t).addEventListener("input",function(e){
+var k=e.target.getAttribute("data-k");if(!k)return;
+S[t][k]=k==="name"?e.target.value:(parseFloat(e.target.value)||0);
+update(t);
+});
+update(t);
+}
+function update(t){
+var m=CALC[t](S[t]),hero=m[0];
+var h='<div class="hero"><small>'+hero[0]+'</small><b class="'+(hero[3]?"ok":"no")+'">'+hero[2](hero[1])+"</b></div>";
+m.slice(1).forEach(function(r){
+h+='<div class="m"><span>'+r[0]+'</span><b class="'+(r[3]===true?"ok":r[3]===false?"no":"")+'">'+r[2](r[1])+"</b></div>";
+});
+$("#out-"+t).innerHTML=h+'<p class="legend">'+LEGEND[t]+"</p>";
+sens(t);ccRender(t);
+if(t==="rental")rev();
+}
+
+/* saved deals + compare */
+function renderDeals(){
+var a=getDeals();
+$("#cnt").textContent=a.length?"("+a.length+")":"";
+sel=sel.filter(function(id){return a.some(function(x){return x.id===id})});
+if(!a.length){$("#list").innerHTML='<p class="empty">No saved deals yet. Analyze a deal and select Save deal.</p>'}
+else{
+$("#list").innerHTML=a.map(function(x){
+var hero=CALC[x.type](Object.assign(defaults(x.type),x.inputs))[0];
+return'<div class="deal"><input type="checkbox" data-id="'+x.id+'" aria-label="Select '+esc(x.name)+'"'+(sel.indexOf(x.id)>-1?" checked":"")+'><div class="t"><b>'+esc(x.name)+"</b><small>"+TL[x.type]+" \u00B7 "+hero[0]+": "+hero[2](hero[1])+" \u00B7 "+new Date(x.date).toLocaleDateString()+'</small></div><button class="mini" data-a="open" data-id="'+x.id+'">Open</button><button class="mini del" data-a="del" data-id="'+x.id+'">Delete</button></div>';
+}).join("");
+}
+$("#cmpBtn").disabled=sel.length<2;
+if(sel.length<2)$("#cmpCard").hidden=true;
+}
+function selected(){var a=getDeals();return sel.map(function(id){return a.filter(function(x){return x.id===id})[0]}).filter(Boolean)}
+function full(x){return Object.assign(defaults(x.type),x.inputs)}
+function compare(){
+var items=selected();
+if(items.length<2)return;
+if(items.some(function(x){return x.type!==items[0].type})){toast("Compare deals of the same type.");return}
+var rows=items.map(function(x){return CALC[x.type](full(x))});
+var h="<table><thead><tr><th></th>"+items.map(function(x){return"<th>"+esc(x.name)+"</th>"}).join("")+"</tr></thead><tbody>";
+rows[0].forEach(function(r,i){
+h+="<tr><td>"+r[0]+"</td>"+rows.map(function(c){var v=c[i];return'<td class="'+(v[3]===true?"ok":v[3]===false?"no":"")+'">'+v[2](v[1])+"</td>"}).join("")+"</tr>";
+});
+$("#cmp").innerHTML=h+"</tbody></table>";
+$("#cmpCard").hidden=false;
+}
+
+/* PDF: load jsPDF only on demand; use the browser print dialog when offline. */
+function printPdf(items,title){
+var root=$("#printReport");root.innerHTML="";
+function add(tag,value){var el=document.createElement(tag);el.textContent=value;root.appendChild(el)}
+add("h1","Chameleon Deal Analyzer");
+add("p",title+" - "+new Date().toLocaleDateString());
+items.forEach(function(x){
+add("h2",(x.name||"Untitled deal")+" ("+TL[x.type]+")");
+CALC[x.type](full(x)).forEach(function(r){add("p",r[0]+": "+r[2](r[1]))});
+var inp=FIELDS[x.type].filter(function(f){return typeof f!=="string"}).map(function(f){return f[1]+" "+full(x)[f[0]]+" "+f[2]}).join(", ");
+add("p","Inputs: "+inp);
+});
+add("p","Estimates for planning only. Not financial advice.");
+window.print();
+}
+function savePdf(items,title){
+var J=window.jspdf;if(!J)return false;
+try{
+var doc=new J.jsPDF(),y=18;
+function line(txt,size,bold,color){
+if(y>280){doc.addPage();y=18}
+doc.setFontSize(size);doc.setFont("helvetica",bold?"bold":"normal");doc.setTextColor(color||30);
+doc.splitTextToSize(String(txt),180).forEach(function(l){doc.text(l,14,y);y+=size*.5+2});
+}
+function plain(f){return f.replace(/[^\x20-\x7E]/g,"")}
+line("Chameleon Deal Analyzer",18,true,25);
+line(title+" - "+new Date().toLocaleDateString(),10,false,110);y+=4;
+items.forEach(function(x){
+var m=CALC[x.type](full(x));
+line(plain(x.name||"Untitled deal")+" ("+TL[x.type]+")",13,true,25);
+m.forEach(function(r){line(r[0]+": "+r[2](r[1]),10,false,40)});
+y+=1;
+var inp=FIELDS[x.type].filter(function(f){return typeof f!=="string"}).map(function(f){return f[1]+" "+full(x)[f[0]]+" "+f[2]}).join(", ");
+line("Inputs: "+inp,8,false,110);y+=6;
+});
+line("Estimates for planning only. Not financial advice.",8,false,110);
+doc.save("chameleon-deal-summary.pdf");return true;
+}catch(err){return false}
+}
+function loadPdfLibrary(){
+if(window.jspdf)return Promise.resolve(true);
+if(pdfLoading)return pdfLoading;
+pdfLoading=new Promise(function(resolve,reject){
+var script=document.createElement("script");script.src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";script.async=true;
+script.onload=function(){if(window.jspdf)resolve(true);else reject(new Error("PDF library unavailable"))};
+script.onerror=function(){reject(new Error("PDF library unavailable"))};
+document.head.appendChild(script);
+});
+return pdfLoading;
+}
+function pdf(items,title){
+if(window.jspdf){if(!savePdf(items,title))printPdf(items,title);return}
+loadPdfLibrary().then(function(){if(!savePdf(items,title))printPdf(items,title)}).catch(function(){printPdf(items,title)});
+}
+function current(t){return{type:t,name:S[t].name||"Untitled deal",inputs:S[t]}}
+
+/* events */
+document.addEventListener("click",function(e){
+var b=e.target.closest("[data-v],[data-a]");if(!b)return;
+if(b.hasAttribute("data-v")){show(b.getAttribute("data-v"));return}
+var a=b.getAttribute("data-a"),t=b.getAttribute("data-t"),id=b.getAttribute("data-id");
+if(a==="save"){
+var c=current(t);
+if(putDeals(getDeals().concat([{id:"d"+Date.now(),type:t,name:c.name,inputs:JSON.parse(JSON.stringify(c.inputs)),date:Date.now()}]))){toast("Deal saved");renderDeals()}
+}else if(a==="pdf"){pdf([current(t)],TL[t]+" analysis")}
+else if(a==="reset"){S[t]=defaults(t);buildView(t)}
+else if(a==="del"){putDeals(getDeals().filter(function(x){return x.id!==id}));renderDeals();$("#cmpCard").hidden=true}
+else if(a==="open"){
+var x=getDeals().filter(function(y){return y.id===id})[0];
+if(x&&FIELDS[x.type]){S[x.type]=full(x);buildView(x.type);show(x.type)}
+}else if(a==="ai"){ai(t)}
+else if(a==="imp"){imp(t)}
+else if(a==="applyb"||a==="applys"){
+var k=a==="applyb"?(t==="flip"?"buyClose":"closing"):"sell",v=a==="applyb"?ccTot(t,"b"):d(ccTot(t,"s"),S[t].arv)*100;
+v=Math.round(v*100)/100;S[t][k]=v;$("#"+t+"-"+k).value=v;update(t);toast("Applied");
+}
+});
+document.addEventListener("change",function(e){
+var el=e.target,c=el.closest&&el.closest(".cc");if(!c)return;
+var t=c.id.slice(3);
+if(el.hasAttribute("data-cc"))S[t].cc.x[el.getAttribute("data-cc")]=!el.checked;
+else if(el.hasAttribute("data-cr"))S[t].cc.credit=Math.max(0,parseFloat(el.value)||0);
+ccRender(t);
+});
+document.addEventListener("input",function(e){
+if(e.target.id==="revT"){revT=parseFloat(e.target.value)||0;rev()}
+});
+$("#list").addEventListener("change",function(e){
+var id=e.target.getAttribute("data-id");if(!id)return;
+if(e.target.checked){
+if(sel.length>=3){e.target.checked=false;toast("You can compare up to 3 deals.");return}
+sel.push(id);
+}else sel=sel.filter(function(x){return x!==id});
+$("#cmpBtn").disabled=sel.length<2;
+if(sel.length<2)$("#cmpCard").hidden=true;
+});
+$("#cmpBtn").addEventListener("click",compare);
+$("#cmpPdf").addEventListener("click",function(){var it=selected();if(it.length>1)pdf(it,"Deal comparison")});
+
+function show(v){
+TYPES.concat("deals").forEach(function(k){$("#v-"+k).hidden=k!==v});
+document.querySelectorAll("nav button").forEach(function(b){b.setAttribute("aria-selected",b.getAttribute("data-v")===v)});
+if(v==="deals")renderDeals();
+}
+
+TYPES.forEach(function(t){S[t]=defaults(t);buildView(t)});
+renderDeals();
+})();
+
+}catch(err){
+  var el=document.getElementById("chameleon-error");
+  if(el){el.style.display="block";el.textContent="INIT ERROR: "+err.message+"\n"+(err.stack||"")}
+}
+});
+</script>
+<div id="chameleon-error" style="display:none;position:fixed;top:0;left:0;right:0;background:#3a0f0f;color:#ff6b6b;padding:14px 18px;font:14px/1.5 monospace;z-index:99999;border-bottom:2px solid #ff6b6b;white-space:pre-wrap;max-height:60vh;overflow:auto"></div>
+</body>
+</html>
